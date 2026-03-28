@@ -192,13 +192,31 @@
     #orbit-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
 
     /* ── PLANET SHOP ── */
+    /* ── MOBILE TOGGLE BUTTONS ── */
+    .panel-toggle {
+      display: none;
+      position: fixed; top: 10px; z-index: 450;
+      width: 42px; height: 42px;
+      border-radius: 10px; border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(8,8,28,0.92);
+      backdrop-filter: blur(8px);
+      color: #ffd700; font-size: 1.2rem;
+      cursor: pointer; align-items: center; justify-content: center;
+      box-shadow: 0 0 12px rgba(0,0,0,0.4);
+      transition: background 0.15s;
+    }
+    .panel-toggle:hover { background: rgba(255,215,0,0.12); }
+    #toggle-shop { right: 10px; }
+    #toggle-ability { left: 10px; color: #7df7ff; }
+
     #planet-shop {
       position: fixed; top: 14px; right: 14px; width: 210px;
-      background: rgba(8,8,28,0.88);
+      background: rgba(8,8,28,0.92);
       border: 1px solid rgba(255,215,0,0.25); border-radius: 14px;
       padding: 12px 10px; z-index: 400;
       backdrop-filter: blur(10px);
       box-shadow: 0 0 30px rgba(255,215,0,0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+      transition: transform 0.3s ease, opacity 0.3s ease;
     }
     .shop-title {
       font-size: 0.8rem; font-weight: bold; letter-spacing: 2px;
@@ -238,11 +256,12 @@
     /* ── ABILITY PANEL ── */
     #ability-panel {
       position: fixed; top: 14px; left: 14px; width: 200px;
-      background: rgba(8,8,28,0.88);
+      background: rgba(8,8,28,0.92);
       border: 1px solid rgba(100,220,255,0.2); border-radius: 14px;
       padding: 12px 10px; z-index: 400;
       backdrop-filter: blur(10px);
       box-shadow: 0 0 24px rgba(100,220,255,0.06);
+      transition: transform 0.3s ease, opacity 0.3s ease;
     }
     .ap-title {
       font-size: 0.78rem; font-weight: bold; letter-spacing: 2px;
@@ -257,6 +276,67 @@
     }
     #ap-pro { background: rgba(0,255,100,0.07); color: #7dff8c; border: 1px solid rgba(125,255,140,0.15); }
     #ap-con { background: rgba(255,60,60,0.07);  color: #ff8888; border: 1px solid rgba(255,100,100,0.15); }
+
+    /* ── MOBILE ── */
+    @media (max-width: 700px) {
+      .panel-toggle { display: flex; }
+
+      #planet-shop {
+        position: fixed; top: 0; right: 0; bottom: 0;
+        width: 75vw; max-width: 280px;
+        border-radius: 14px 0 0 14px;
+        padding: 56px 10px 16px;
+        overflow-y: auto;
+        transform: translateX(105%);
+        opacity: 0;
+        pointer-events: none;
+      }
+      #planet-shop.open {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      #ability-panel {
+        position: fixed; top: 0; left: 0; bottom: 0;
+        width: 75vw; max-width: 260px;
+        border-radius: 0 14px 14px 0;
+        padding: 56px 10px 16px;
+        overflow-y: auto;
+        transform: translateX(-105%);
+        opacity: 0;
+        pointer-events: none;
+      }
+      #ability-panel.open {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      /* Dimmed backdrop when a panel is open */
+      .panel-backdrop {
+        position: fixed; inset: 0; z-index: 390;
+        background: rgba(0,0,0,0.55);
+        display: none;
+      }
+      .panel-backdrop.show { display: block; }
+
+      h1 { font-size: 1.5rem; margin-bottom: 6px; }
+      #score-display { font-size: 2.2rem; }
+      #star-container { width: 140px; height: 140px; }
+      #star { width: 110px; height: 110px; }
+      #energy-bar-track { width: 200px; }
+    }
+
+    @media (max-width: 400px) {
+      #planet-shop { width: 85vw; }
+      #ability-panel { width: 85vw; }
+      h1 { font-size: 1.2rem; }
+      #score-display { font-size: 1.8rem; }
+      #star-container { width: 120px; height: 120px; }
+      #star { width: 95px; height: 95px; }
+      #energy-bar-track { width: 160px; }
+    }
 
     /* ── FLOATING TEXT ── */
     .float-text {
@@ -474,6 +554,11 @@
     <div id="energy-label">&#9889; STAR ENERGY <span id="energy-pct">100%</span></div>
     <div id="energy-bar-track"><div id="energy-bar-fill"></div></div>
   </div>
+
+  <!-- Mobile toggles & backdrop -->
+  <button class="panel-toggle" id="toggle-ability">&#9889;</button>
+  <button class="panel-toggle" id="toggle-shop">&#127756;</button>
+  <div class="panel-backdrop" id="panel-backdrop"></div>
 
   <!-- Ability panel -->
   <div id="ability-panel">
@@ -1514,6 +1599,39 @@
     setTimeout(spawnUFO, Math.random() * 25000 + 20000);
   }
   setTimeout(spawnUFO, Math.random() * 25000 + 20000);
+
+  // ─────────────────────────────────────────────────────────────
+  // MOBILE PANEL TOGGLES
+  // ─────────────────────────────────────────────────────────────
+  const backdrop = document.getElementById('panel-backdrop');
+  const shopPanel = document.getElementById('planet-shop');
+  const abilPanel = document.getElementById('ability-panel');
+
+  function closeAllPanels() {
+    shopPanel.classList.remove('open');
+    abilPanel.classList.remove('open');
+    backdrop.classList.remove('show');
+  }
+
+  document.getElementById('toggle-shop').addEventListener('click', () => {
+    const opening = !shopPanel.classList.contains('open');
+    closeAllPanels();
+    if (opening) {
+      shopPanel.classList.add('open');
+      backdrop.classList.add('show');
+    }
+  });
+
+  document.getElementById('toggle-ability').addEventListener('click', () => {
+    const opening = !abilPanel.classList.contains('open');
+    closeAllPanels();
+    if (opening) {
+      abilPanel.classList.add('open');
+      backdrop.classList.add('show');
+    }
+  });
+
+  backdrop.addEventListener('click', closeAllPanels);
 
   </script>
 </body>
