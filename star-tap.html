@@ -195,19 +195,29 @@
     /* ── MOBILE TOGGLE BUTTONS ── */
     .panel-toggle {
       display: none;
-      position: fixed; top: 10px; z-index: 450;
-      width: 42px; height: 42px;
-      border-radius: 10px; border: 1px solid rgba(255,255,255,0.15);
+      position: fixed; bottom: 12px; z-index: 450;
+      height: 38px; padding: 0 14px;
+      border-radius: 20px; border: 1px solid rgba(255,255,255,0.18);
       background: rgba(8,8,28,0.92);
       backdrop-filter: blur(8px);
-      color: #ffd700; font-size: 1.2rem;
-      cursor: pointer; align-items: center; justify-content: center;
-      box-shadow: 0 0 12px rgba(0,0,0,0.4);
+      color: #ffd700; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px;
+      cursor: pointer; align-items: center; justify-content: center; gap: 5px;
+      box-shadow: 0 0 14px rgba(0,0,0,0.5);
       transition: background 0.15s;
     }
     .panel-toggle:hover { background: rgba(255,215,0,0.12); }
-    #toggle-shop { right: 10px; }
-    #toggle-ability { left: 10px; color: #7df7ff; }
+    .panel-toggle .t-icon { font-size: 1rem; }
+    #toggle-shop { right: 12px; }
+    #toggle-ability { left: 12px; color: #7df7ff; border-color: rgba(125,247,255,0.2); }
+
+    /* Dimmed backdrop when a panel is open */
+    .panel-backdrop {
+      position: fixed; inset: 0; z-index: 390;
+      background: rgba(0,0,0,0.5);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .panel-backdrop.show { opacity: 1; pointer-events: all; }
 
     #planet-shop {
       position: fixed; top: 14px; right: 14px; width: 210px;
@@ -224,6 +234,14 @@
       text-align: center; margin-bottom: 10px; padding-bottom: 8px;
       border-bottom: 1px solid rgba(255,215,0,0.15);
     }
+    /* Close btn inside sheets on mobile */
+    .sheet-close {
+      display: none;
+      position: absolute; top: 10px; right: 12px;
+      background: none; border: none; color: #666; font-size: 1.3rem;
+      cursor: pointer; z-index: 5; padding: 4px;
+    }
+    .sheet-close:hover { color: #fff; }
     .planet-btn {
       display: flex; align-items: center; gap: 8px;
       width: 100%; padding: 7px 9px; margin-bottom: 5px;
@@ -280,62 +298,66 @@
     /* ── MOBILE ── */
     @media (max-width: 700px) {
       .panel-toggle { display: flex; }
+      .sheet-close  { display: block; }
 
-      #planet-shop {
-        position: fixed; top: 0; right: 0; bottom: 0;
-        width: 75vw; max-width: 280px;
-        border-radius: 14px 0 0 14px;
-        padding: 56px 10px 16px;
+      /* Both panels become bottom sheets */
+      #planet-shop, #ability-panel {
+        position: fixed; left: 0; right: 0; bottom: 0;
+        top: auto; width: 100%; max-width: 100%;
+        max-height: 52vh;
+        border-radius: 18px 18px 0 0;
+        padding: 14px 14px 20px;
         overflow-y: auto;
-        transform: translateX(105%);
+        -webkit-overflow-scrolling: touch;
+        transform: translateY(110%);
         opacity: 0;
         pointer-events: none;
       }
-      #planet-shop.open {
-        transform: translateX(0);
+      #planet-shop.open, #ability-panel.open {
+        transform: translateY(0);
         opacity: 1;
         pointer-events: all;
       }
-
-      #ability-panel {
-        position: fixed; top: 0; left: 0; bottom: 0;
-        width: 75vw; max-width: 260px;
-        border-radius: 0 14px 14px 0;
-        padding: 56px 10px 16px;
-        overflow-y: auto;
-        transform: translateX(-105%);
-        opacity: 0;
-        pointer-events: none;
-      }
-      #ability-panel.open {
-        transform: translateX(0);
-        opacity: 1;
-        pointer-events: all;
+      /* Drag handle indicator */
+      #planet-shop::before, #ability-panel::before {
+        content: '';
+        display: block;
+        width: 36px; height: 4px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 3px;
+        margin: 0 auto 10px;
       }
 
-      /* Dimmed backdrop when a panel is open */
-      .panel-backdrop {
-        position: fixed; inset: 0; z-index: 390;
-        background: rgba(0,0,0,0.55);
-        display: none;
+      /* Planet shop mobile: 2-column grid for compact layout */
+      #shop-items {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
       }
-      .panel-backdrop.show { display: block; }
+      .planet-btn { padding: 6px 7px; margin-bottom: 0; gap: 5px; }
+      .planet-btn .p-emoji { font-size: 1rem; }
+      .planet-btn .p-name  { font-size: 0.72rem; }
+      .planet-btn .p-cost  { font-size: 0.66rem; }
+      .planet-btn .p-drain { font-size: 0.6rem; }
 
-      h1 { font-size: 1.5rem; margin-bottom: 6px; }
+      /* Ability panel mobile */
+      #ability-panel { max-height: 35vh; }
+
+      /* Scale down game elements */
+      h1 { font-size: 1.4rem; margin-bottom: 6px; }
       #score-display { font-size: 2.2rem; }
-      #star-container { width: 140px; height: 140px; }
-      #star { width: 110px; height: 110px; }
+      #star-container { width: 130px; height: 130px; }
+      #star { width: 105px; height: 105px; }
       #energy-bar-track { width: 200px; }
     }
 
     @media (max-width: 400px) {
-      #planet-shop { width: 85vw; }
-      #ability-panel { width: 85vw; }
-      h1 { font-size: 1.2rem; }
-      #score-display { font-size: 1.8rem; }
-      #star-container { width: 120px; height: 120px; }
-      #star { width: 95px; height: 95px; }
+      h1 { font-size: 1.15rem; }
+      #score-display { font-size: 1.7rem; }
+      #star-container { width: 110px; height: 110px; }
+      #star { width: 90px; height: 90px; }
       #energy-bar-track { width: 160px; }
+      #planet-shop, #ability-panel { max-height: 55vh; padding: 12px 10px 16px; }
     }
 
     /* ── FLOATING TEXT ── */
@@ -556,12 +578,13 @@
   </div>
 
   <!-- Mobile toggles & backdrop -->
-  <button class="panel-toggle" id="toggle-ability">&#9889;</button>
-  <button class="panel-toggle" id="toggle-shop">&#127756;</button>
+  <button class="panel-toggle" id="toggle-ability"><span class="t-icon">&#9889;</span> Ability</button>
+  <button class="panel-toggle" id="toggle-shop"><span class="t-icon">&#127756;</span> Planets</button>
   <div class="panel-backdrop" id="panel-backdrop"></div>
 
   <!-- Ability panel -->
   <div id="ability-panel">
+    <button class="sheet-close" id="close-ability">&times;</button>
     <div class="ap-title">&#9889; ABILITY</div>
     <div id="ap-planet"></div>
     <div id="ap-none">Buy a planet to unlock abilities</div>
@@ -571,6 +594,7 @@
 
   <!-- Planet shop -->
   <div id="planet-shop">
+    <button class="sheet-close" id="close-shop">&times;</button>
     <div class="shop-title">&#127756; PLANETS</div>
     <div id="shop-items"></div>
   </div>
@@ -1632,6 +1656,8 @@
   });
 
   backdrop.addEventListener('click', closeAllPanels);
+  document.getElementById('close-shop').addEventListener('click', closeAllPanels);
+  document.getElementById('close-ability').addEventListener('click', closeAllPanels);
 
   </script>
 </body>
