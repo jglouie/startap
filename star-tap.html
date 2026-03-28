@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Star Tap</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #060612;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 4px;
+      color: #ffd700;
+      text-shadow: 0 0 20px #ffd700, 0 0 40px #ffd70066;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 10;
+    }
+
+    #score-display {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 0 10px #ffffff55;
+      margin-bottom: 4px;
+      transition: color 0.3s;
+      position: relative;
+      z-index: 10;
+    }
+    #score-display.frenzy { color: #ff4dff; text-shadow: 0 0 20px #ff4dff; }
+    #score-display.frozen { color: #00cfff; text-shadow: 0 0 20px #00cfff; }
+
+    #taps-display { font-size: 1rem; color: #888; margin-bottom: 4px; position: relative; z-index: 10; }
+
+    #multiplier-display {
+      font-size: 1.1rem; font-weight: bold; color: #ff6a00;
+      text-shadow: 0 0 10px #ff6a0099;
+      margin-bottom: 4px; min-height: 1.4em; position: relative; z-index: 10;
+    }
+
+    #status-display {
+      font-size: 0.9rem; font-weight: bold; min-height: 1.2em;
+      margin-bottom: 16px; letter-spacing: 1px; position: relative; z-index: 10;
+    }
+
+    /* ── STAR ── */
+    #star-container {
+      position: relative;
+      width: 180px; height: 180px;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10;
+    }
+    .star-halo { position: absolute; border-radius: 50%; pointer-events: none; }
+    #halo-core {
+      width: 100px; height: 100px;
+      background: radial-gradient(circle, #ffd70066 0%, #ffd70022 50%, transparent 75%);
+      animation: halo-breathe 2s ease-in-out infinite alternate;
+    }
+    #halo-mid {
+      width: 170px; height: 170px;
+      background: radial-gradient(circle, transparent 30%, #ffd70018 55%, transparent 80%);
+      animation: halo-breathe 2.8s ease-in-out infinite alternate-reverse;
+    }
+    #halo-outer {
+      width: 240px; height: 240px;
+      background: radial-gradient(circle, transparent 40%, #ffa50010 65%, transparent 85%);
+      animation: halo-breathe 3.6s ease-in-out infinite alternate;
+    }
+    #halo-rays {
+      width: 260px; height: 260px;
+      background: conic-gradient(
+        transparent 0deg, #ffd70008 10deg, transparent 20deg,
+        transparent 35deg, #ffd70006 45deg, transparent 55deg,
+        transparent 70deg, #ffd70008 80deg, transparent 90deg,
+        transparent 110deg, #ffd70006 120deg, transparent 130deg,
+        transparent 160deg, #ffd70008 170deg, transparent 180deg,
+        transparent 200deg, #ffd70006 210deg, transparent 220deg,
+        transparent 250deg, #ffd70008 260deg, transparent 270deg,
+        transparent 290deg, #ffd70006 300deg, transparent 310deg,
+        transparent 340deg, #ffd70008 350deg, transparent 360deg
+      );
+      animation: rays-spin 12s linear infinite; border-radius: 50%;
+    }
+    #halo-sparkle-ring {
+      width: 200px; height: 200px; border-radius: 50%;
+      box-shadow: 0 0 0 1px #ffd70022, 0 0 12px 2px #ffd70022;
+      animation: ring-pulse 2.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes halo-breathe { 0% { transform: scale(0.92); opacity: 0.7; } 100% { transform: scale(1.12); opacity: 1; } }
+    @keyframes rays-spin    { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes ring-pulse   { 0% { box-shadow: 0 0 0 1px #ffd70022, 0 0 12px 2px #ffd70022; } 100% { box-shadow: 0 0 0 1px #ffd70055, 0 0 28px 6px #ffd70044; } }
+
+    #star {
+      width: 140px; height: 140px;
+      cursor: pointer; position: relative; z-index: 2;
+      filter:
+        drop-shadow(0 0 12px #ffd700)
+        drop-shadow(0 0 28px #ffd700bb)
+        drop-shadow(0 0 55px #ffa50077)
+        drop-shadow(0 0 90px #ff880033);
+      transition: transform 0.08s ease, filter 0.15s ease;
+      animation: star-idle-float 3s ease-in-out infinite alternate;
+    }
+    /* The SVG rays layer slow-spins for a living sun feel */
+    #sun-rays {
+      animation: rays-slow-spin 18s linear infinite;
+      transform-origin: 70px 70px;
+    }
+    /* The core disk pulses slightly */
+    #sun-core {
+      animation: core-breathe 2.4s ease-in-out infinite alternate;
+      transform-origin: 70px 70px;
+    }
+    @keyframes core-breathe {
+      0%   { transform: scale(0.96); }
+      100% { transform: scale(1.04); }
+    }
+    @keyframes rays-slow-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes star-idle-float { 0% { transform: translateY(0px) scale(1); } 100% { transform: translateY(-6px) scale(1.02); } }
+    #star:hover {
+      filter:
+        drop-shadow(0 0 18px #ffd700)
+        drop-shadow(0 0 40px #ffd700dd)
+        drop-shadow(0 0 75px #ffa500aa)
+        drop-shadow(0 0 120px #ff880055);
+    }
+    #star.tapped  { transform: scale(0.82) !important; filter: drop-shadow(0 0 8px #ffd70066) !important; animation: none; }
+    #star.jackpot { animation: jackpot-pulse 0.5s ease forwards !important; }
+    #star.frenzy-glow { filter: drop-shadow(0 0 20px #ff4dff) drop-shadow(0 0 50px #ff4dffbb) drop-shadow(0 0 90px #ff4dff66) !important; }
+    #star.critical { animation: star-flicker 0.25s ease-in-out infinite !important; }
+
+    @keyframes jackpot-pulse {
+      0%   { transform: scale(0.8);  filter: drop-shadow(0 0 60px #fffb00) drop-shadow(0 0 120px #ffd70099); }
+      50%  { transform: scale(1.35); filter: drop-shadow(0 0 90px #fffb00) drop-shadow(0 0 160px #ffd700cc); }
+      100% { transform: scale(1);    filter: drop-shadow(0 0 28px #ffd700) drop-shadow(0 0 55px #ffa50077); }
+    }
+    @keyframes star-flicker {
+      0%,100% { opacity: 1; filter: drop-shadow(0 0 28px #ffd700) drop-shadow(0 0 55px #ffa50077); }
+      50%     { opacity: 0.25; filter: drop-shadow(0 0 6px #ff4400); }
+    }
+
+    /* ── ENERGY BAR ── */
+    #energy-wrap {
+      position: relative; z-index: 10;
+      margin-top: 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+    }
+    #energy-label {
+      font-size: 0.72rem; letter-spacing: 2px; font-weight: bold;
+      color: #ffd700; text-shadow: 0 0 8px #ffd70088;
+      display: flex; align-items: center; gap: 8px;
+    }
+    #energy-pct { font-size: 0.72rem; color: #aaa; }
+    #energy-bar-track {
+      width: 280px; height: 13px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 8px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+    #energy-bar-fill {
+      height: 100%; width: 100%;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #00ff88, #ffd700);
+      transition: width 0.3s ease, background 0.6s ease;
+      box-shadow: 0 0 8px rgba(0,255,136,0.5);
+    }
+    #energy-bar-fill.warn    { background: linear-gradient(90deg, #ff8c00, #ffd700); box-shadow: 0 0 8px rgba(255,140,0,0.6); }
+    #energy-bar-fill.danger  { background: linear-gradient(90deg, #ff2200, #ff8c00); box-shadow: 0 0 12px rgba(255,34,0,0.7); animation: danger-pulse 0.5s ease infinite alternate; }
+    @keyframes danger-pulse { 0% { box-shadow: 0 0 8px rgba(255,34,0,0.5); } 100% { box-shadow: 0 0 20px rgba(255,34,0,0.9); } }
+
+    /* ── ORBIT LAYER ── */
+    #orbit-layer { position: fixed; inset: 0; pointer-events: none; z-index: 6; }
+    .orbit-planet { position: absolute; pointer-events: none; line-height: 1; filter: drop-shadow(0 0 6px rgba(255,255,255,0.4)); }
+    #orbit-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+
+    /* ── PLANET SHOP ── */
+    #planet-shop {
+      position: fixed; top: 14px; right: 14px; width: 210px;
+      background: rgba(8,8,28,0.88);
+      border: 1px solid rgba(255,215,0,0.25); border-radius: 14px;
+      padding: 12px 10px; z-index: 400;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 30px rgba(255,215,0,0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .shop-title {
+      font-size: 0.8rem; font-weight: bold; letter-spacing: 2px;
+      color: #ffd700; text-shadow: 0 0 10px #ffd70088;
+      text-align: center; margin-bottom: 10px; padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,215,0,0.15);
+    }
+    .planet-btn {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; padding: 7px 9px; margin-bottom: 5px;
+      border-radius: 9px; border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04); color: #ccc;
+      cursor: pointer; font-size: 0.78rem;
+      transition: background 0.15s, border-color 0.15s, opacity 0.15s, transform 0.1s;
+      text-align: left;
+    }
+    .planet-btn .p-emoji { font-size: 1.2rem; flex-shrink: 0; }
+    .planet-btn .p-info  { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+    .planet-btn .p-name  { font-weight: bold; color: #eee; font-size: 0.8rem; }
+    .planet-btn .p-cost  { color: #ffd700; font-size: 0.72rem; }
+    .planet-btn .p-drain { color: #ff6655; font-size: 0.65rem; }
+    .planet-btn.affordable { border-color: rgba(255,215,0,0.45); background: rgba(255,215,0,0.08); color: #fff; box-shadow: 0 0 8px rgba(255,215,0,0.1); }
+    .planet-btn.affordable:hover { background: rgba(255,215,0,0.15); transform: translateX(-2px); }
+    .planet-btn.unaffordable { opacity: 0.32; cursor: not-allowed; }
+    .planet-btn.owned { border-color: rgba(100,255,120,0.4); background: rgba(100,255,120,0.06); opacity: 0.8; cursor: default; }
+    .planet-btn.owned .p-cost { color: #7dff8c; }
+    .p-equip-btn {
+      font-size: 0.6rem; font-weight: bold; letter-spacing: 1px;
+      padding: 3px 7px; border-radius: 5px; flex-shrink: 0;
+      background: rgba(255,215,0,0.12); color: #ffd700;
+      border: 1px solid rgba(255,215,0,0.3); cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .p-equip-btn:hover { background: rgba(255,215,0,0.28); }
+    .p-equip-btn.active { background: rgba(125,255,140,0.2); color: #7dff8c; border-color: rgba(125,255,140,0.45); }
+
+    /* ── ABILITY PANEL ── */
+    #ability-panel {
+      position: fixed; top: 14px; left: 14px; width: 200px;
+      background: rgba(8,8,28,0.88);
+      border: 1px solid rgba(100,220,255,0.2); border-radius: 14px;
+      padding: 12px 10px; z-index: 400;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 24px rgba(100,220,255,0.06);
+    }
+    .ap-title {
+      font-size: 0.78rem; font-weight: bold; letter-spacing: 2px;
+      color: #7df7ff; text-shadow: 0 0 8px #7df7ff66;
+      text-align: center; margin-bottom: 8px; padding-bottom: 7px;
+      border-bottom: 1px solid rgba(125,247,255,0.12);
+    }
+    #ap-planet { font-size: 0.88rem; font-weight: bold; color: #fff; text-align: center; margin-bottom: 6px; min-height: 1.2em; }
+    #ap-none   { font-size: 0.72rem; color: #444; text-align: center; }
+    #ap-pro, #ap-con {
+      font-size: 0.7rem; line-height: 1.45; padding: 5px 7px; border-radius: 6px; margin-bottom: 4px;
+    }
+    #ap-pro { background: rgba(0,255,100,0.07); color: #7dff8c; border: 1px solid rgba(125,255,140,0.15); }
+    #ap-con { background: rgba(255,60,60,0.07);  color: #ff8888; border: 1px solid rgba(255,100,100,0.15); }
+
+    /* ── FLOATING TEXT ── */
+    .float-text {
+      position: fixed; font-size: 1.5rem; font-weight: bold;
+      pointer-events: none; animation: float-up 1s ease forwards; z-index: 500;
+    }
+    .float-text.normal       { color: #7df7ff; text-shadow: 0 0 8px #7df7ff88; }
+    .float-text.jackpot      { color: #ffd700; font-size: 2.2rem; text-shadow: 0 0 16px #ffd700; }
+    .float-text.asteroid-hit { color: #ff6a00; font-size: 2rem;   text-shadow: 0 0 16px #ff6a00; }
+    .float-text.ufo-hit      { color: #ff4dff; font-size: 2rem;   text-shadow: 0 0 16px #ff4dff; }
+    .float-text.ufo-steal    { color: #ff3333; font-size: 1.8rem; text-shadow: 0 0 12px #ff0000; }
+    .float-text.freeze       { color: #00cfff; font-size: 2rem;   text-shadow: 0 0 16px #00cfff; }
+    .float-text.frenzy       { color: #ff4dff; font-size: 1.8rem; text-shadow: 0 0 16px #ff4dff; }
+    .float-text.planet-buy   { color: #7dff8c; font-size: 1.8rem; text-shadow: 0 0 14px #7dff8c; }
+    .float-text.energy-warn  { color: #ff4400; font-size: 1.4rem; text-shadow: 0 0 10px #ff4400; }
+    @keyframes float-up { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-90px); } }
+
+    /* ── BANNERS ── */
+    .banner {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: 2.2rem; font-weight: bold;
+      padding: 18px 36px; border-radius: 16px;
+      pointer-events: none; z-index: 600; white-space: nowrap;
+    }
+    .banner.show { animation: banner-pop 1.5s ease forwards; }
+    #jackpot-banner  { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; box-shadow: 0 0 60px #ffd700; }
+    #asteroid-banner { background: linear-gradient(135deg, #ff6a00, #ee0979); color: #fff; box-shadow: 0 0 60px #ff6a00; }
+    #ufo-banner      { background: linear-gradient(135deg, #a200ff, #ff4dff); color: #fff; box-shadow: 0 0 60px #ff4dff; }
+    #freeze-banner   { background: linear-gradient(135deg, #00cfff, #0060ff); color: #fff; box-shadow: 0 0 60px #00cfff; }
+    #steal-banner    { background: linear-gradient(135deg, #ff0000, #880000); color: #fff; box-shadow: 0 0 60px #ff0000; }
+    #planet-banner   { background: linear-gradient(135deg, #00ff88, #0066ff); color: #fff; box-shadow: 0 0 60px #00ff88; font-size: 1.6rem; }
+    @keyframes banner-pop {
+      0%   { transform: translate(-50%,-50%) scale(0);    opacity: 0; }
+      18%  { transform: translate(-50%,-50%) scale(1.08); opacity: 1; }
+      30%  { transform: translate(-50%,-50%) scale(1);    opacity: 1; }
+      75%  { transform: translate(-50%,-50%) scale(1);    opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(0.9);  opacity: 0; }
+    }
+
+    /* ── OVERLAYS ── */
+    #freeze-overlay {
+      position: fixed; inset: 0; background: rgba(0,180,255,0.08);
+      border: 3px solid rgba(0,200,255,0.3); pointer-events: none;
+      z-index: 50; opacity: 0; transition: opacity 0.4s;
+    }
+    #freeze-overlay.active { opacity: 1; }
+    #frenzy-overlay {
+      position: fixed; inset: 0; pointer-events: none;
+      z-index: 50; opacity: 0; transition: opacity 0.4s;
+    }
+    #frenzy-overlay.active { opacity: 1; animation: frenzy-pulse 0.6s ease infinite alternate; }
+    @keyframes frenzy-pulse { 0% { box-shadow: inset 0 0 80px #ff4dff44; } 100% { box-shadow: inset 0 0 120px #ff4dff88; } }
+
+    /* ── ASTEROID / UFO ── */
+    .asteroid { position: fixed; font-size: 48px; cursor: pointer; pointer-events: all; z-index: 80; filter: drop-shadow(0 0 10px #ff6a0099); line-height: 1; }
+    .asteroid:hover { filter: drop-shadow(0 0 20px #ff6a00cc); }
+    .ufo { position: fixed; font-size: 52px; cursor: pointer; pointer-events: all; z-index: 80; filter: drop-shadow(0 0 14px #ff4dff99); line-height: 1; }
+    .ufo:hover { filter: drop-shadow(0 0 28px #ff4dffcc); }
+    .ufo-beam {
+      position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%);
+      width: 30px; height: 40px; background: linear-gradient(to bottom, #ff4dff88, transparent);
+      clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+      animation: beam-pulse 0.5s ease infinite alternate; pointer-events: none;
+    }
+    @keyframes beam-pulse { 0% { opacity: 0.4; } 100% { opacity: 0.9; } }
+    .ufo-warning {
+      position: absolute; top: -28px; left: 50%; transform: translateX(-50%);
+      font-size: 0.7rem; font-weight: bold; color: #ff4dff;
+      white-space: nowrap; pointer-events: none; text-shadow: 0 0 6px #ff4dff;
+    }
+
+    /* ── BG STARS ── */
+    .bg-star { position: fixed; border-radius: 50%; background: white; opacity: 0; animation: twinkle linear infinite; }
+    @keyframes twinkle { 0%,100% { opacity: 0; } 50% { opacity: 0.8; } }
+
+    /* ── TIMER BARS ── */
+    #frenzy-bar-container, #freeze-bar-container {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      width: 220px; height: 10px; background: #222; border-radius: 8px;
+      overflow: hidden; display: none; z-index: 300;
+    }
+    #frenzy-bar { height: 100%; width: 100%; background: linear-gradient(90deg,#a200ff,#ff4dff); border-radius: 8px; transition: width 0.1s linear; }
+    #freeze-bar { height: 100%; width: 100%; background: linear-gradient(90deg,#0060ff,#00cfff); border-radius: 8px; transition: width 0.1s linear; }
+    #frenzy-label, #freeze-label {
+      position: fixed; bottom: 38px; left: 50%; transform: translateX(-50%);
+      font-size: 0.8rem; font-weight: bold; letter-spacing: 2px; display: none; z-index: 300;
+    }
+    #frenzy-label { color: #ff4dff; }
+    #freeze-label { color: #00cfff; }
+
+    /* ── MUTE BUTTON ── */
+    #mute-btn {
+      position: fixed; bottom: 16px; right: 16px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      color: #aaa; border-radius: 8px; padding: 6px 12px;
+      font-size: 0.8rem; cursor: pointer; z-index: 500;
+      transition: background 0.2s;
+    }
+    #mute-btn:hover { background: rgba(255,255,255,0.15); }
+
+    /* ── SUPERNOVA / GAME OVER ── */
+    #supernova-overlay {
+      position: fixed; inset: 0; z-index: 800;
+      display: none; pointer-events: none;
+      background: radial-gradient(circle at center, #fff 0%, #ffaa00 20%, #ff4400 45%, #660000 70%, #000 100%);
+      opacity: 0;
+    }
+    #supernova-overlay.blast {
+      display: block;
+      animation: supernova-blast 1.8s ease-out forwards;
+    }
+    @keyframes supernova-blast {
+      0%   { opacity: 0; transform: scale(0); }
+      25%  { opacity: 1; transform: scale(1.2); }
+      60%  { opacity: 0.7; }
+      100% { opacity: 0; transform: scale(3); }
+    }
+
+    #game-over-screen {
+      position: fixed; inset: 0; z-index: 900;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(12px);
+    }
+    #game-over-screen.show { display: flex; animation: fade-in 0.6s ease forwards; }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+    #game-over-screen h2 {
+      font-size: 3.5rem; letter-spacing: 6px;
+      background: linear-gradient(135deg, #ff4400, #ffd700);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    #game-over-screen .subtitle {
+      color: #888; font-size: 1rem; letter-spacing: 2px; margin-bottom: 40px;
+    }
+    .go-stat {
+      display: flex; justify-content: space-between; align-items: center;
+      width: 320px; padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 1.1rem;
+    }
+    .go-stat .label { color: #888; }
+    .go-stat .value { color: #ffd700; font-weight: bold; }
+    #play-again-btn {
+      margin-top: 40px; padding: 14px 48px;
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #000; font-size: 1.2rem; font-weight: bold;
+      border: none; border-radius: 12px; cursor: pointer;
+      letter-spacing: 2px;
+      box-shadow: 0 0 30px rgba(255,215,0,0.4);
+      transition: transform 0.1s, box-shadow 0.2s;
+    }
+    #play-again-btn:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(255,215,0,0.6); }
+  </style>
+</head>
+<body>
+
+  <canvas id="orbit-canvas"></canvas>
+  <div id="orbit-layer"></div>
+
+  <h1>STAR TAP</h1>
+  <div id="score-display">0</div>
+  <div id="taps-display">0 taps</div>
+  <div id="multiplier-display"></div>
+  <div id="status-display"></div>
+
+  <div id="star-container">
+    <div class="star-halo" id="halo-rays"></div>
+    <div class="star-halo" id="halo-outer"></div>
+    <div class="star-halo" id="halo-mid"></div>
+    <div class="star-halo" id="halo-core"></div>
+    <div class="star-halo" id="halo-sparkle-ring"></div>
+    <svg id="star" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="coreGrad" cx="50%" cy="40%" r="55%">
+          <stop offset="0%"   stop-color="#fff7a0"/>
+          <stop offset="35%"  stop-color="#ffe033"/>
+          <stop offset="70%"  stop-color="#ff9900"/>
+          <stop offset="100%" stop-color="#ff5500"/>
+        </radialGradient>
+        <radialGradient id="rayGrad" cx="50%" cy="0%" r="100%" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stop-color="#ffe033" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#ff6600" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- 12 triangular rays, evenly spaced, spinning slowly -->
+      <g id="sun-rays">
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(30,70,70)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(60,70,70)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(90,70,70)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(120,70,70)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(150,70,70)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(180,70,70)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(210,70,70)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(240,70,70)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(270,70,70)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(300,70,70)"/>
+        <polygon points="70,4  63,34  77,34"  fill="url(#rayGrad)" transform="rotate(330,70,70)"/>
+      </g>
+
+      <!-- Core disk -->
+      <circle id="sun-core" cx="70" cy="70" r="34" fill="url(#coreGrad)"/>
+
+      <!-- Subtle surface shimmer ring -->
+      <circle cx="70" cy="70" r="34" fill="none" stroke="#fff7a0" stroke-width="1.2" opacity="0.25"/>
+    </svg>
+  </div>
+
+  <div id="energy-wrap">
+    <div id="energy-label">&#9889; STAR ENERGY <span id="energy-pct">100%</span></div>
+    <div id="energy-bar-track"><div id="energy-bar-fill"></div></div>
+  </div>
+
+  <!-- Ability panel -->
+  <div id="ability-panel">
+    <div class="ap-title">&#9889; ABILITY</div>
+    <div id="ap-planet"></div>
+    <div id="ap-none">Buy a planet to unlock abilities</div>
+    <div id="ap-pro" style="display:none"></div>
+    <div id="ap-con" style="display:none"></div>
+  </div>
+
+  <!-- Planet shop -->
+  <div id="planet-shop">
+    <div class="shop-title">&#127756; PLANETS</div>
+    <div id="shop-items"></div>
+  </div>
+
+  <!-- Banners -->
+  <div class="banner" id="jackpot-banner">&#11088; JACKPOT! +1,000</div>
+  <div class="banner" id="asteroid-banner">&#9732; ASTEROID! 2x MULTIPLIER!</div>
+  <div class="banner" id="ufo-banner"></div>
+  <div class="banner" id="freeze-banner">&#10052; FROZEN! No tapping!</div>
+  <div class="banner" id="steal-banner"></div>
+  <div class="banner" id="planet-banner"></div>
+
+  <!-- Overlays -->
+  <div id="freeze-overlay"></div>
+  <div id="frenzy-overlay"></div>
+
+  <!-- Timer bars -->
+  <div id="frenzy-label">TAP FRENZY!</div>
+  <div id="frenzy-bar-container"><div id="frenzy-bar"></div></div>
+  <div id="freeze-label">FROZEN!</div>
+  <div id="freeze-bar-container"><div id="freeze-bar"></div></div>
+
+  <!-- Audio / mute -->
+  <button id="mute-btn">&#128266; Music</button>
+
+  <!-- Game over -->
+  <div id="supernova-overlay"></div>
+  <div id="game-over-screen">
+    <h2>SUPERNOVA</h2>
+    <div class="subtitle">THE STAR HAS DIED</div>
+    <div class="go-stat"><span class="label">Final Score</span><span class="value" id="go-score">0</span></div>
+    <div class="go-stat"><span class="label">Total Taps</span><span class="value" id="go-taps">0</span></div>
+    <div class="go-stat"><span class="label">Peak Multiplier</span><span class="value" id="go-mult">1x</span></div>
+    <div class="go-stat"><span class="label">Planets Owned</span><span class="value" id="go-planets">0</span></div>
+    <button id="play-again-btn">PLAY AGAIN</button>
+  </div>
+
+  <script>
+  // ─────────────────────────────────────────────────────────────
+  // AUDIO ENGINE
+  // ─────────────────────────────────────────────────────────────
+  let audioCtx = null, masterGain, sfxBus, musicBus;
+  let musicMuted = false, musicStarted = false;
+  let lofiScheduler = null;
+  let nextChordTime = 0, chordIndex = 0;
+
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain(); masterGain.gain.value = 0.7; masterGain.connect(audioCtx.destination);
+    sfxBus  = audioCtx.createGain(); sfxBus.gain.value  = 1.0; sfxBus.connect(masterGain);
+    musicBus = audioCtx.createGain(); musicBus.gain.value = 0.22; musicBus.connect(masterGain);
+    startLofiMusic();
+    musicStarted = true;
+  }
+
+  document.getElementById('mute-btn').addEventListener('click', () => {
+    initAudio();
+    musicMuted = !musicMuted;
+    musicBus.gain.value = musicMuted ? 0 : 0.22;
+    document.getElementById('mute-btn').textContent = musicMuted ? '🔇 Music' : '🔊 Music';
+  });
+
+  // ── SOUND EFFECTS ──────────────────────────────────────────────────────────
+
+  // --- Low-level primitives ---
+
+  // Pure bell tone: instant attack, exponential decay. Classic slot machine ding.
+  function bell(when, freq, vol, decay) {
+    const osc = audioCtx.createOscillator();
+    const g   = audioCtx.createGain();
+    osc.connect(g); g.connect(sfxBus);
+    osc.type = 'sine'; osc.frequency.value = freq;
+    g.gain.setValueAtTime(vol, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + decay);
+    osc.start(when); osc.stop(when + decay + 0.01);
+  }
+
+  // Coin ping: short high sine — the sound of a coin hitting a metal tray.
+  function coin(when) {
+    const freq = 700 + Math.random() * 650;
+    const dur  = 0.045 + Math.random() * 0.045;
+    const osc  = audioCtx.createOscillator();
+    const g    = audioCtx.createGain();
+    osc.connect(g); g.connect(sfxBus);
+    osc.type = 'sine'; osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.18, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+    osc.start(when); osc.stop(when + dur + 0.01);
+  }
+
+  // Reel stop THUNK: low sine pitch drop + simultaneous sharp click.
+  function thunk(when, vol = 0.55) {
+    const osc = audioCtx.createOscillator();
+    const g   = audioCtx.createGain();
+    osc.connect(g); g.connect(sfxBus);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(160, when);
+    osc.frequency.exponentialRampToValueAtTime(42, when + 0.11);
+    g.gain.setValueAtTime(vol, when);
+    g.gain.exponentialRampToValueAtTime(0.001, when + 0.16);
+    osc.start(when); osc.stop(when + 0.18);
+    // Sharp click on top
+    const sr  = audioCtx.sampleRate;
+    const len = Math.ceil(sr * 0.016);
+    const buf = audioCtx.createBuffer(1, len, sr);
+    const d   = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len * 0.2));
+    const src = audioCtx.createBufferSource(); src.buffer = buf;
+    const bp  = audioCtx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 3200; bp.Q.value = 2;
+    const cg  = audioCtx.createGain(); cg.gain.value = 0.7;
+    src.connect(bp); bp.connect(cg); cg.connect(sfxBus);
+    src.start(when);
+  }
+
+  // Reel spin buffer: pre-generates the brrrrr of a spinning reel.
+  // Uses integrated phase so the clicks correctly decelerate as the reel slows.
+  function spinBuf(durSec, fastRate, slowRate) {
+    const sr  = audioCtx.sampleRate;
+    const len = Math.ceil(sr * durSec);
+    const buf = audioCtx.createBuffer(1, len, sr);
+    const d   = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      const t    = i / sr;
+      // Integrated phase — handles varying click rate correctly
+      const phase = (fastRate * t - (fastRate - slowRate) * t * t / (2 * durSec)) % 1.0;
+      // Each click occupies the first ~6% of the cycle with exponential decay
+      if (phase < 0.065) {
+        const env = Math.exp(-phase / 0.018);
+        d[i] = (Math.random() * 2 - 1) * env * 0.7;
+      }
+    }
+    return buf;
+  }
+
+  function playSpinBuf(buf, when, bpFreq, vol) {
+    const src = audioCtx.createBufferSource(); src.buffer = buf;
+    const bp  = audioCtx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = bpFreq; bp.Q.value = 1.8;
+    const g   = audioCtx.createGain(); g.gain.value = vol;
+    src.connect(bp); bp.connect(g); g.connect(sfxBus);
+    src.start(when);
+    return src;
+  }
+
+  // ── TAP — slot machine button press ──
+  function sndTap() {
+    if (!audioCtx) return;
+    const t  = audioCtx.currentTime;
+    const sr = audioCtx.sampleRate;
+    const len = Math.ceil(sr * 0.013);
+    const buf = audioCtx.createBuffer(1, len, sr);
+    const d   = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len * 0.22));
+    const src = audioCtx.createBufferSource(); src.buffer = buf;
+    const bp  = audioCtx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 3;
+    const g   = audioCtx.createGain(); g.gain.value = 0.6;
+    src.connect(bp); bp.connect(g); g.connect(sfxBus);
+    src.start(t);
+    // Tiny body resonance thump
+    const osc = audioCtx.createOscillator(); const og = audioCtx.createGain();
+    osc.connect(og); og.connect(sfxBus); osc.type = 'sine'; osc.frequency.value = 280;
+    og.gain.setValueAtTime(0.07, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    osc.start(t); osc.stop(t + 0.06);
+  }
+
+  // ── JACKPOT — authentic 3-reel slot machine ──
+  // Three reels each spin and decelerate, stop with a THUNK, then ding-ding-ding + coins
+  function sndJackpot() {
+    if (!audioCtx) return;
+    const t0 = audioCtx.currentTime;
+
+    // Three reels at distinct bandpass frequencies (low / mid / high)
+    const STOPS = [0.80, 1.10, 1.40];
+    STOPS.forEach((stopAt, i) => {
+      const buf = spinBuf(stopAt, 36 + i * 5, 4);
+      playSpinBuf(buf, t0, 700 + i * 450, 0.8);
+      thunk(t0 + stopAt, 0.6 + i * 0.05);
+    });
+
+    // Ding ding ding — classic Liberty Bell jingle after last reel
+    const jAt = t0 + 1.55;
+    // C5  E5   G5   C6
+    [523, 659, 784, 1047].forEach((f, i) => bell(jAt + i * 0.14, f, 0.28, 0.65));
+    // Octave shimmer
+    [523, 659, 784, 1047].forEach((f, i) => bell(jAt + i * 0.14 + 0.03, f * 2, 0.08, 0.35));
+
+    // Coin cascade — dense burst that slowly tapers off
+    const cAt = t0 + 2.1;
+    for (let i = 0; i < 32; i++) {
+      coin(cAt + Math.pow(Math.random(), 0.45) * 2.4);
+    }
+    // Extra loud first splash
+    for (let i = 0; i < 6; i++) coin(cAt + i * 0.04);
+  }
+
+  // ── ASTEROID ──
+  function sndAsteroid() {
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    thunk(t, 0.75);
+    [523, 784, 1047].forEach((f, i) => bell(t + 0.1 + i * 0.1, f, 0.2, 0.4));
+    for (let i = 0; i < 6; i++) coin(t + 0.3 + i * 0.06);
+  }
+
+  // ── PLANET BUY — bonus round lock-in ──
+  function sndPlanetBuy() {
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    // Lock in 3 reels one by one
+    [0, 0.14, 0.28].forEach(d => thunk(t + d, 0.5));
+    // Ascending fanfare bells
+    [392, 523, 659, 784, 1047, 1319].forEach((f, i) => bell(t + 0.4 + i * 0.1, f, 0.22, 0.5));
+    // Coin burst
+    for (let i = 0; i < 12; i++) coin(t + 0.44 + Math.random() * 0.9);
+  }
+
+  // ── UFO HIT ──
+  function sndUFOHit() {
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    thunk(t, 0.5);
+    [659, 1047].forEach((f, i) => bell(t + 0.08 + i * 0.12, f, 0.2, 0.4));
+    for (let i = 0; i < 5; i++) coin(t + 0.3 + i * 0.07);
+  }
+
+  // ── UFO MISS — descending wah-wah ──
+  function sndUFOMiss() {
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    [[420, 300], [300, 200]].forEach(([f1, f2], i) => {
+      const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+      osc.connect(g); g.connect(sfxBus); osc.type = 'sawtooth';
+      const at = t + i * 0.2;
+      osc.frequency.setValueAtTime(f1, at); osc.frequency.linearRampToValueAtTime(f2, at + 0.18);
+      g.gain.setValueAtTime(0.2, at); g.gain.linearRampToValueAtTime(0, at + 0.2);
+      osc.start(at); osc.stop(at + 0.22);
+    });
+  }
+
+  // ── FREEZE — reels locking cold ──
+  function sndFreeze() {
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    const buf = spinBuf(0.35, 28, 0);
+    playSpinBuf(buf, t, 1400, 0.6);
+    thunk(t + 0.36, 0.7);
+  }
+
+  // ── FRENZY — reels spinning up ──
+  function sndFrenzy() {
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    // Spin that accelerates instead of decelerating
+    const buf = spinBuf(0.6, 5, 45);
+    playSpinBuf(buf, t, 1100, 0.7);
+    [523, 784, 1047, 1568].forEach((f, i) => bell(t + 0.55 + i * 0.08, f, 0.2, 0.4));
+  }
+
+  // ── ENERGY WARN ──
+  function sndEnergyWarn() {
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    // Two low thuds — tilt warning
+    thunk(t,      0.4);
+    thunk(t + 0.22, 0.35);
+  }
+
+  // ── GAME OVER — machine grinding to death ──
+  function sndGameOver() {
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    // Long reel spinning down to nothing
+    const buf = spinBuf(1.1, 40, 0);
+    playSpinBuf(buf, t, 900, 0.9);
+    // Three final hard stops
+    [1.12, 1.30, 1.48].forEach((d, i) => thunk(t + d, 0.75 - i * 0.05));
+    // Sad descending bells
+    [392, 330, 262, 196].forEach((f, i) => bell(t + 1.65 + i * 0.25, f, 0.22, 0.7));
+    // Low rumble fade
+    const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+    osc.connect(g); g.connect(sfxBus); osc.type = 'sine'; osc.frequency.value = 55;
+    g.gain.setValueAtTime(0.2, t + 2.7); g.gain.linearRampToValueAtTime(0, t + 3.5);
+    osc.start(t + 2.7); osc.stop(t + 3.6);
+  }
+
+  // ── LOFI MUSIC ──────────────────────────────────────────────
+  // Chord progression: Am7 → Dm7 → G7 → Cmaj7  (75 BPM, 4 beats/chord)
+  const CHORDS = [
+    [220, 261.6, 329.6, 392],    // Am7
+    [146.8, 174.6, 220, 261.6],  // Dm7
+    [196, 246.9, 293.7, 349.2],  // G7
+    [130.8, 164.8, 196, 246.9],  // Cmaj7
+  ];
+  const BEAT = 60 / 75;   // seconds per beat
+  const BAR  = BEAT * 4;  // seconds per chord
+
+  // Simple kick/snare/hat pattern per beat
+  function schedDrum(when) {
+    // Kick on beats 1 & 3
+    [0, BEAT * 2].forEach(offset => {
+      const t = when + offset;
+      const osc = audioCtx.createOscillator();
+      const g   = audioCtx.createGain();
+      osc.connect(g); g.connect(musicBus);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(160, t);
+      osc.frequency.exponentialRampToValueAtTime(40, t + 0.25);
+      g.gain.setValueAtTime(0.55, t); g.gain.linearRampToValueAtTime(0, t + 0.25);
+      osc.start(t); osc.stop(t + 0.25);
+    });
+    // Snare on beats 2 & 4 (slightly swung)
+    [BEAT + 0.02, BEAT * 3 + 0.02].forEach(offset => {
+      const t = when + offset;
+      const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * 0.15), audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (d.length * 0.4));
+      const src = audioCtx.createBufferSource(); src.buffer = buf;
+      const flt = audioCtx.createBiquadFilter(); flt.type = 'bandpass'; flt.frequency.value = 2200;
+      const g   = audioCtx.createGain(); g.gain.value = 0.35;
+      src.connect(flt); flt.connect(g); g.connect(musicBus);
+      src.start(t);
+    });
+    // Hi-hats: every half-beat, quiet
+    for (let i = 0; i < 8; i++) {
+      const t = when + i * (BEAT / 2) + (i % 2 === 1 ? 0.01 : 0); // swing
+      const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * 0.04), audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let j = 0; j < d.length; j++) d[j] = Math.random() * 2 - 1;
+      const src = audioCtx.createBufferSource(); src.buffer = buf;
+      const flt = audioCtx.createBiquadFilter(); flt.type = 'highpass'; flt.frequency.value = 8000;
+      const g   = audioCtx.createGain(); g.gain.value = i % 2 === 0 ? 0.12 : 0.07;
+      src.connect(flt); flt.connect(g); g.connect(musicBus);
+      src.start(t);
+    }
+  }
+
+  function schedChord(freqs, when) {
+    freqs.forEach((f, i) => {
+      // Each note: 2 slightly detuned oscillators for width
+      [-3, 0, 3].forEach(cents => {
+        const osc  = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const lp   = audioCtx.createBiquadFilter();
+        lp.type = 'lowpass'; lp.frequency.value = 1800 + Math.random() * 200;
+        osc.connect(lp); lp.connect(gain); gain.connect(musicBus);
+        osc.type = 'triangle';
+        osc.frequency.value = f * Math.pow(2, cents / 1200);
+        const atk = 0.18, vol = 0.055 - i * 0.004;
+        gain.gain.setValueAtTime(0, when);
+        gain.gain.linearRampToValueAtTime(vol, when + atk);
+        gain.gain.setValueAtTime(vol, when + BAR - 0.3);
+        gain.gain.linearRampToValueAtTime(0, when + BAR);
+        osc.start(when); osc.stop(when + BAR + 0.1);
+      });
+    });
+  }
+
+  // Occasional melody note from Am pentatonic: A C D E G
+  const MELODY = [220, 261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3];
+  function schedMelody(when) {
+    if (Math.random() > 0.55) return;
+    const offset = (Math.random() * 3) * BEAT;
+    const f = MELODY[Math.floor(Math.random() * MELODY.length)];
+    const osc  = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const lp   = audioCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+    osc.connect(lp); lp.connect(gain); gain.connect(musicBus);
+    osc.type = 'sine'; osc.frequency.value = f;
+    const t = when + offset;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.07, t + 0.05);
+    gain.gain.linearRampToValueAtTime(0, t + 0.5);
+    osc.start(t); osc.stop(t + 0.55);
+  }
+
+  function startLofiMusic() {
+    if (!audioCtx) return;
+    nextChordTime = audioCtx.currentTime + 0.1;
+    chordIndex = 0;
+
+    function schedule() {
+      while (nextChordTime < audioCtx.currentTime + 2.0) {
+        schedChord(CHORDS[chordIndex % 4], nextChordTime);
+        schedDrum(nextChordTime);
+        schedMelody(nextChordTime);
+        chordIndex++;
+        nextChordTime += BAR;
+      }
+      lofiScheduler = setTimeout(schedule, 500);
+    }
+    schedule();
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // GAME STATE
+  // ─────────────────────────────────────────────────────────────
+  let score      = 0;
+  let taps       = 0;
+  let multiplier = 1;
+  let peakMult   = 1;
+  let energy     = 100;
+  let gameOver   = false;
+  let frozenUntil = 0;
+  let frenzyUntil = 0;
+  let frenzyTimer = null;
+  let freezeTimer = null;
+  let lastEnergyWarnTime = 0;
+  let lastEnergyTick = performance.now();
+
+  const BASE_DRAIN   = 2.5;  // %/s
+  const PLANET_DRAIN = 0.6;  // %/s per planet
+
+  // ─────────────────────────────────────────────────────────────
+  // DOM REFS
+  // ─────────────────────────────────────────────────────────────
+  const star           = document.getElementById('star');
+  const scoreDisplay   = document.getElementById('score-display');
+  const tapsDisplay    = document.getElementById('taps-display');
+  const multDisplay    = document.getElementById('multiplier-display');
+  const statusDisplay  = document.getElementById('status-display');
+  const jackpotBanner  = document.getElementById('jackpot-banner');
+  const asteroidBanner = document.getElementById('asteroid-banner');
+  const ufoBanner      = document.getElementById('ufo-banner');
+  const freezeBanner   = document.getElementById('freeze-banner');
+  const stealBanner    = document.getElementById('steal-banner');
+  const planetBanner   = document.getElementById('planet-banner');
+  const freezeOverlay  = document.getElementById('freeze-overlay');
+  const frenzyOverlay  = document.getElementById('frenzy-overlay');
+  const frenzyBarCont  = document.getElementById('frenzy-bar-container');
+  const frenzyBarEl    = document.getElementById('frenzy-bar');
+  const frenzyLabel    = document.getElementById('frenzy-label');
+  const freezeBarCont  = document.getElementById('freeze-bar-container');
+  const freezeBarEl    = document.getElementById('freeze-bar');
+  const freezeLabel    = document.getElementById('freeze-label');
+  const orbitLayer     = document.getElementById('orbit-layer');
+  const orbitCanvas    = document.getElementById('orbit-canvas');
+  const orbitCtx       = orbitCanvas.getContext('2d');
+  const energyFill     = document.getElementById('energy-bar-fill');
+  const energyPct      = document.getElementById('energy-pct');
+
+  // ─────────────────────────────────────────────────────────────
+  // BG STARS
+  // ─────────────────────────────────────────────────────────────
+  for (let i = 0; i < 90; i++) {
+    const s = document.createElement('div');
+    s.className = 'bg-star';
+    const sz = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}vh;left:${Math.random()*100}vw;animation-duration:${Math.random()*3+2}s;animation-delay:${Math.random()*4}s;`;
+    document.body.appendChild(s);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────────────────────────
+  function fmtScore(n) {
+    if (n >= 1e12) return (n/1e12).toFixed(2).replace(/\.?0+$/,'') + 'T';
+    if (n >= 1e9)  return (n/1e9).toFixed(2).replace(/\.?0+$/,'')  + 'B';
+    if (n >= 1e6)  return (n/1e6).toFixed(2).replace(/\.?0+$/,'')  + 'M';
+    if (n >= 1e3)  return (n/1e3).toFixed(1).replace(/\.?0+$/,'')  + 'K';
+    return n.toLocaleString();
+  }
+
+  function updateMultDisplay() {
+    peakMult = Math.max(peakMult, multiplier);
+    multDisplay.textContent = multiplier > 1 ? `${fmtScore(multiplier)}x MULTIPLIER` : '';
+  }
+
+  function spawnFloatText(text, x, y, type) {
+    const el = document.createElement('div');
+    el.className = `float-text ${type}`;
+    el.textContent = text;
+    el.style.left = `${x - 30}px`;
+    el.style.top  = `${y - 20}px`;
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  function showBanner(el) {
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+  }
+
+  function getStarCenter() {
+    const r = document.getElementById('star-container').getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // ENERGY SYSTEM
+  // ─────────────────────────────────────────────────────────────
+  function addEnergy(amount) {
+    energy = Math.min(100, energy + amount);
+  }
+
+  function drainEnergy(amount) {
+    if (gameOver) return;
+    energy = Math.max(0, energy - amount);
+    if (energy <= 0) triggerGameOver();
+  }
+
+  function updateEnergyBar() {
+    const pct = Math.max(0, energy);
+    energyFill.style.width = `${pct}%`;
+    energyPct.textContent  = `${Math.round(pct)}%`;
+    energyFill.classList.remove('warn', 'danger');
+    if (pct < 15)       energyFill.classList.add('danger');
+    else if (pct < 35)  energyFill.classList.add('warn');
+
+    // Star flicker when critical
+    if (pct < 15) star.classList.add('critical');
+    else          star.classList.remove('critical');
+
+    // Halo dims as energy drops
+    const haloAlpha = Math.max(0.15, pct / 100);
+    document.getElementById('halo-core').style.opacity  = haloAlpha;
+    document.getElementById('halo-mid').style.opacity   = haloAlpha;
+    document.getElementById('halo-outer').style.opacity = haloAlpha;
+  }
+
+  // Energy tick — runs inside orbit loop
+  function tickEnergy(now) {
+    if (gameOver) return;
+    const dt = now - lastEnergyTick;
+    lastEnergyTick = now;
+    const drainPerSec = (BASE_DRAIN + abil.planetDrainRate * activePlanets.length) * abil.energyDrainMult;
+    const regen = abil.passiveRegen * dt / 1000;
+    energy = Math.min(100, Math.max(0, energy - drainPerSec * dt / 1000 + regen));
+    if (energy <= 0) { energy = 0; triggerGameOver(); return; }
+    updateEnergyBar();
+
+    if (energy < 20 && now - lastEnergyWarnTime > 2000) {
+      sndEnergyWarn();
+      lastEnergyWarnTime = now;
+      const sc = getStarCenter();
+      spawnFloatText('⚡ LOW ENERGY!', sc.x, sc.y - 120, 'energy-warn');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // GAME OVER
+  // ─────────────────────────────────────────────────────────────
+  function triggerGameOver() {
+    if (gameOver) return;
+    gameOver = true;
+    if (lofiScheduler) clearTimeout(lofiScheduler);
+    sndGameOver();
+
+    // Supernova blast
+    const nova = document.getElementById('supernova-overlay');
+    nova.style.display = 'block';
+    nova.classList.add('blast');
+
+    setTimeout(() => {
+      nova.style.display = 'none';
+      nova.classList.remove('blast');
+      // Show results
+      document.getElementById('go-score').textContent   = fmtScore(score);
+      document.getElementById('go-taps').textContent    = taps.toLocaleString();
+      document.getElementById('go-mult').textContent    = `${fmtScore(peakMult)}x`;
+      document.getElementById('go-planets').textContent = activePlanets.length;
+      document.getElementById('game-over-screen').classList.add('show');
+    }, 2000);
+  }
+
+  document.getElementById('play-again-btn').addEventListener('click', () => {
+    location.reload();
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // ORBIT CANVAS
+  // ─────────────────────────────────────────────────────────────
+  function resizeCanvas() {
+    orbitCanvas.width  = window.innerWidth;
+    orbitCanvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // ─────────────────────────────────────────────────────────────
+  // PLANET DATA & SHOP
+  // ─────────────────────────────────────────────────────────────
+  const PLANET_DEFS = [
+    { name:'Mercury', emoji:'🌑', cost:800,          orbitR:108, speed:0.90, size:20,
+      abilityName:'Hot Shot',
+      pro:'Every 5 taps triggers a 200pt bonus',
+      con:'Energy drains 30% faster' },
+    { name:'Venus',   emoji:'🌕', cost:6000,         orbitR:138, speed:0.65, size:24,
+      abilityName:'Fortune\'s Favor',
+      pro:'Jackpot chance tripled (6%)',
+      con:'Alien thieves steal 30% instead of 15%' },
+    { name:'Earth',   emoji:'🌍', cost:55000,        orbitR:172, speed:0.52, size:26,
+      abilityName:'Life Support',
+      pro:'Energy slowly regenerates (+0.6%/s)',
+      con:'Asteroid multiplier reduced to 1.5×' },
+    { name:'Mars',    emoji:'🔴', cost:600000,       orbitR:210, speed:0.40, size:24,
+      abilityName:'War Machine',
+      pro:'Missing asteroids gives +3% energy',
+      con:'Jackpot only pays 400 pts' },
+    { name:'Jupiter', emoji:'🟠', cost:12000000,     orbitR:258, speed:0.28, size:38,
+      abilityName:'Gravity Well',
+      pro:'UFOs & asteroids move 50% slower',
+      con:'Each tap restores only half energy' },
+    { name:'Saturn',  emoji:'🪐', cost:300000000,    orbitR:312, speed:0.20, size:36,
+      abilityName:'Time Lord',
+      pro:'Frenzy mode lasts 25 seconds',
+      con:'Planet energy drain rate doubled' },
+    { name:'Uranus',  emoji:'🔵', cost:9000000000,   orbitR:368, speed:0.15, size:28,
+      abilityName:'Ice Wall',
+      pro:'Freeze UFOs auto-destroyed (never freeze you)',
+      con:'Overall energy drains 60% faster' },
+    { name:'Neptune', emoji:'🌊', cost:350000000000, orbitR:424, speed:0.11, size:28,
+      abilityName:'Deep Pockets',
+      pro:'Jackpot pays 8,000 pts',
+      con:'Jackpot chance halved (1%)' },
+  ];
+
+  // ── ABILITY SYSTEM ────────────────────────────────────────────
+  // All ability modifiers in one object — easy to reset and override
+  const abil = {
+    energyDrainMult : 1,    // multiplies total energy drain
+    planetDrainRate : 0.28, // %/s per owned planet (Saturn doubles this)
+    jackpotChance   : 0.02,
+    jackpotPoints   : 1000,
+    tapEnergyRefill : 0.8,  // % energy per tap
+    asteroidMult    : 2,    // multiplier granted by asteroid click
+    asteroidMissEnergy: -5, // energy delta on asteroid miss (Mars makes positive)
+    frenzyDuration  : 10000,
+    objectSlow      : 1.0,  // >1 = more time on screen (Jupiter)
+    blockFreeze     : false,
+    passiveRegen    : 0,    // %/s passive energy gain (Earth)
+    hotShotEvery    : 0,    // 0 = off; N = every N taps gets bonus (Mercury)
+  };
+  let equippedIdx    = null;
+  let hotShotCount   = 0;
+
+  function resetAbil() {
+    abil.energyDrainMult   = 1;
+    abil.planetDrainRate   = 0.28;
+    abil.jackpotChance     = 0.02;
+    abil.jackpotPoints     = 1000;
+    abil.tapEnergyRefill   = 0.8;
+    abil.asteroidMult      = 2;
+    abil.asteroidMissEnergy = -5;
+    abil.frenzyDuration    = 10000;
+    abil.objectSlow        = 1.0;
+    abil.blockFreeze       = false;
+    abil.passiveRegen      = 0;
+    abil.hotShotEvery      = 0;
+  }
+
+  function equipPlanet(idx) {
+    equippedIdx = idx;
+    resetAbil();
+    hotShotCount = 0;
+    switch (idx) {
+      case 0: abil.energyDrainMult = 1.30; abil.hotShotEvery = 5; break;     // Mercury
+      case 1: abil.jackpotChance   = 0.06; break;                             // Venus (theft handled in UFO onMiss)
+      case 2: abil.passiveRegen    = 0.4;  abil.asteroidMult = 1.5; break;   // Earth
+      case 3: abil.asteroidMissEnergy = 3; abil.jackpotPoints = 400; break;   // Mars
+      case 4: abil.objectSlow = 2.0; abil.tapEnergyRefill = 0.7; break;      // Jupiter
+      case 5: abil.frenzyDuration = 25000; abil.planetDrainRate = 0.56; break;// Saturn
+      case 6: abil.blockFreeze = true; abil.energyDrainMult = 1.60; break;   // Uranus
+      case 7: abil.jackpotPoints = 8000; abil.jackpotChance = 0.01; break;   // Neptune
+    }
+    updateAbilityPanel();
+    updateEquipBtns();
+  }
+
+  function updateAbilityPanel() {
+    const apPlanet = document.getElementById('ap-planet');
+    const apNone   = document.getElementById('ap-none');
+    const apPro    = document.getElementById('ap-pro');
+    const apCon    = document.getElementById('ap-con');
+    if (equippedIdx === null) {
+      apPlanet.textContent = '';
+      apNone.style.display = 'block';
+      apPro.style.display  = 'none';
+      apCon.style.display  = 'none';
+    } else {
+      const p = PLANET_DEFS[equippedIdx];
+      apPlanet.textContent = `${p.emoji} ${p.name} — ${p.abilityName}`;
+      apNone.style.display = 'none';
+      apPro.style.display  = 'block'; apPro.textContent = `✅ ${p.pro}`;
+      apCon.style.display  = 'block'; apCon.textContent = `❌ ${p.con}`;
+    }
+  }
+
+  function updateEquipBtns() {
+    document.querySelectorAll('.p-equip-btn').forEach(btn => {
+      const idx = parseInt(btn.dataset.idx);
+      btn.classList.toggle('active', idx === equippedIdx);
+      btn.textContent = idx === equippedIdx ? '✓ ON' : 'EQUIP';
+    });
+  }
+
+  const activePlanets = [];
+  const shopItems = document.getElementById('shop-items');
+
+  PLANET_DEFS.forEach((p, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'planet-btn unaffordable';
+    btn.dataset.idx = idx;
+    btn.innerHTML = `
+      <span class="p-emoji">${p.emoji}</span>
+      <span class="p-info">
+        <span class="p-name">${p.name}</span>
+        <span class="p-cost">${fmtScore(p.cost)} pts</span>
+        <span class="p-drain">+10x • ${p.abilityName}</span>
+      </span>`;
+    btn.addEventListener('click', () => { initAudio(); buyPlanet(idx, btn); });
+    shopItems.appendChild(btn);
+  });
+
+  function updateShopButtons() {
+    shopItems.querySelectorAll('.planet-btn').forEach((btn, idx) => {
+      if (btn.classList.contains('owned')) return;
+      const canAfford = score >= PLANET_DEFS[idx].cost;
+      btn.classList.toggle('affordable',   canAfford);
+      btn.classList.toggle('unaffordable', !canAfford);
+    });
+  }
+
+  function buyPlanet(idx, btn) {
+    if (btn.classList.contains('owned') || btn.classList.contains('unaffordable')) return;
+    const p = PLANET_DEFS[idx];
+    if (score < p.cost) return;
+    score -= p.cost;
+    multiplier *= 10;
+    scoreDisplay.textContent = fmtScore(score);
+    updateMultDisplay();
+    updateShopButtons();
+    btn.classList.remove('affordable', 'unaffordable');
+    btn.classList.add('owned');
+    btn.querySelector('.p-cost').textContent = 'ORBITING';
+    btn.querySelector('.p-drain').textContent = p.abilityName;
+    // Add equip button
+    const eqBtn = document.createElement('span');
+    eqBtn.className = 'p-equip-btn';
+    eqBtn.dataset.idx = idx;
+    eqBtn.textContent = 'EQUIP';
+    eqBtn.addEventListener('click', ev => { ev.stopPropagation(); equipPlanet(idx); });
+    btn.appendChild(eqBtn);
+    // Auto-equip first planet bought
+    if (equippedIdx === null) equipPlanet(idx);
+    launchPlanet(p);
+    sndPlanetBuy();
+    planetBanner.textContent = `${p.emoji} ${p.name} is now orbiting! 10x multiplier!`;
+    showBanner(planetBanner);
+    const sc = getStarCenter();
+    spawnFloatText(`${p.emoji} 10x!`, sc.x, sc.y - 80, 'planet-buy');
+  }
+
+  function launchPlanet(def) {
+    const el = document.createElement('div');
+    el.className = 'orbit-planet';
+    el.textContent = def.emoji;
+    el.style.fontSize = `${def.size}px`;
+    orbitLayer.appendChild(el);
+    activePlanets.push({ def, angle: Math.random() * Math.PI * 2, el });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // MAIN ANIMATION LOOP (orbits + energy)
+  // ─────────────────────────────────────────────────────────────
+  function mainLoop(now) {
+    tickEnergy(now);
+
+    orbitCtx.clearRect(0, 0, orbitCanvas.width, orbitCanvas.height);
+    if (activePlanets.length > 0) {
+      const { x: cx, y: cy } = getStarCenter();
+      activePlanets.forEach(p => {
+        orbitCtx.beginPath();
+        orbitCtx.arc(cx, cy, p.def.orbitR, 0, Math.PI * 2);
+        orbitCtx.strokeStyle = 'rgba(255,255,255,0.045)';
+        orbitCtx.lineWidth = 1;
+        orbitCtx.stroke();
+        p.angle += (p.def.speed * Math.PI) / 180;
+        const px = cx + Math.cos(p.angle) * p.def.orbitR - p.def.size / 2;
+        const py = cy + Math.sin(p.angle) * p.def.orbitR - p.def.size / 2;
+        p.el.style.left = `${px}px`;
+        p.el.style.top  = `${py}px`;
+      });
+    }
+    requestAnimationFrame(mainLoop);
+  }
+  requestAnimationFrame(mainLoop);
+
+  // ─────────────────────────────────────────────────────────────
+  // STAR TAP
+  // ─────────────────────────────────────────────────────────────
+  star.addEventListener('click', (e) => {
+    initAudio();
+    if (gameOver) return;
+    if (Date.now() < frozenUntil) {
+      spawnFloatText('FROZEN!', e.clientX, e.clientY, 'freeze');
+      return;
+    }
+
+    taps++;
+    const isFrenzy  = Date.now() < frenzyUntil;
+    const isJackpot = !isFrenzy && Math.random() < abil.jackpotChance;
+    const basePoints = isJackpot ? abil.jackpotPoints : (isFrenzy ? 100 : 2);
+    const points     = basePoints * multiplier;
+    score += points;
+    addEnergy(isJackpot ? 8 : abil.tapEnergyRefill);
+
+    // Mercury Hot Shot: bonus every N taps
+    if (abil.hotShotEvery > 0 && !isJackpot && !isFrenzy) {
+      hotShotCount++;
+      if (hotShotCount >= abil.hotShotEvery) {
+        hotShotCount = 0;
+        const bonus = 200 * multiplier;
+        score += bonus;
+        spawnFloatText(`🔥 +${fmtScore(bonus)}`, e.clientX, e.clientY - 55, 'asteroid-hit');
+      }
+    }
+
+    scoreDisplay.textContent = fmtScore(score);
+    tapsDisplay.textContent  = `${taps} tap${taps !== 1 ? 's' : ''}`;
+    updateShopButtons();
+
+    star.classList.remove('tapped', 'jackpot');
+    void star.offsetWidth;
+    star.classList.add(isJackpot ? 'jackpot' : 'tapped');
+
+    if (isJackpot) {
+      sndJackpot();
+      showBanner(jackpotBanner);
+      setTimeout(() => star.classList.remove('jackpot'), 500);
+      spawnFloatText(`+${fmtScore(abil.jackpotPoints * multiplier)}`, e.clientX, e.clientY, 'jackpot');
+    } else {
+      sndTap();
+      setTimeout(() => star.classList.remove('tapped'), 150);
+      spawnFloatText(`+${fmtScore(points)}`, e.clientX, e.clientY, isFrenzy ? 'frenzy' : 'normal');
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // ASTEROIDS
+  // ─────────────────────────────────────────────────────────────
+  function spawnAsteroid() {
+    if (gameOver) return;
+    const el = document.createElement('div');
+    el.className = 'asteroid';
+    el.textContent = '☄️';
+    const fromLeft = Math.random() < 0.5;
+    const startX   = fromLeft ? -70 : window.innerWidth + 20;
+    const startY   = Math.random() * window.innerHeight * 0.78 + window.innerHeight * 0.05;
+    const endX     = fromLeft ? window.innerWidth + 70 : -70;
+    const angle    = Math.random() * 30 - 15;
+    const duration = (Math.random() * 1200 + 900) * abil.objectSlow;
+    el.style.left  = `${startX}px`;
+    el.style.top   = `${startY}px`;
+    el.style.transform = `rotate(${fromLeft ? angle : 180 + angle}deg)`;
+    document.body.appendChild(el);
+    let clicked = false, t0 = null;
+    el.addEventListener('click', (e) => {
+      if (clicked || gameOver) return;
+      clicked = true;
+      multiplier *= abil.asteroidMult;
+      updateMultDisplay();
+      sndAsteroid();
+      asteroidBanner.textContent = `☄️ ASTEROID! ${abil.asteroidMult}x MULTIPLIER!`;
+      showBanner(asteroidBanner);
+      spawnFloatText(`${abil.asteroidMult}x MULTIPLIER!`, e.clientX, e.clientY, 'asteroid-hit');
+      el.remove();
+      e.stopPropagation();
+    });
+    (function animate(ts) {
+      if (!t0) t0 = ts;
+      const p = (ts - t0) / duration;
+      if (p >= 1 || clicked) {
+        if (!clicked) {
+          if (abil.asteroidMissEnergy >= 0) addEnergy(abil.asteroidMissEnergy);
+          else drainEnergy(Math.abs(abil.asteroidMissEnergy));
+          el.remove();
+        }
+        return;
+      }
+      el.style.left = `${startX + (endX - startX) * p}px`;
+      el.style.top  = `${startY + Math.sin(p * Math.PI) * angle * 8}px`;
+      requestAnimationFrame(animate);
+    })(performance.now());
+    setTimeout(spawnAsteroid, Math.random() * 22000 + 18000);
+  }
+  setTimeout(spawnAsteroid, Math.random() * 22000 + 18000);
+
+  // ─────────────────────────────────────────────────────────────
+  // UFOs
+  // ─────────────────────────────────────────────────────────────
+  const UFO_TYPES = [
+    {
+      emoji: '🛸', color: '#ff4dff', warn: '✨ BONUS!',
+      onHit(x, y) {
+        sndFrenzy();
+        const dur = abil.frenzyDuration;
+        frenzyUntil = Date.now() + dur;
+        star.classList.add('frenzy-glow');
+        frenzyOverlay.classList.add('active');
+        scoreDisplay.classList.add('frenzy');
+        frenzyBarCont.style.display = 'block'; frenzyLabel.style.display = 'block';
+        freezeBarCont.style.display = 'none';  freezeLabel.style.display = 'none';
+        statusDisplay.textContent = 'TAP FRENZY — 100pts/tap!';
+        statusDisplay.style.color = '#ff4dff';
+        spawnFloatText('TAP FRENZY!', x, y, 'ufo-hit');
+        ufoBanner.textContent = `🛸 TAP FRENZY! 100pts/tap for ${dur/1000}s!`;
+        showBanner(ufoBanner);
+        clearInterval(frenzyTimer);
+        frenzyTimer = setInterval(() => {
+          const left = Math.max(0, frenzyUntil - Date.now());
+          frenzyBarEl.style.width = `${(left / dur) * 100}%`;
+          if (left <= 0) {
+            clearInterval(frenzyTimer);
+            frenzyOverlay.classList.remove('active');
+            scoreDisplay.classList.remove('frenzy');
+            frenzyBarCont.style.display = 'none'; frenzyLabel.style.display = 'none';
+            star.classList.remove('frenzy-glow');
+            statusDisplay.textContent = '';
+          }
+        }, 100);
+      }
+    },
+    {
+      emoji: '👾', color: '#ff4dff', warn: '⚠️ CLICK ME!', isThief: true,
+      onHit(x, y) {
+        sndUFOHit();
+        const bonus = Math.floor(score * 0.20) + 500;
+        score += bonus;
+        scoreDisplay.textContent = fmtScore(score);
+        updateShopButtons();
+        addEnergy(6);
+        spawnFloatText(`BOUNTY! +${fmtScore(bonus)}`, x, y, 'ufo-hit');
+        ufoBanner.textContent = `👾 ALIEN BOUNTY! +${fmtScore(bonus)} pts!`;
+        showBanner(ufoBanner);
+      },
+      onMiss() {
+        sndUFOMiss();
+        const stealPct = equippedIdx === 1 ? 0.30 : 0.15; // Venus doubles theft against you
+        const stolen = Math.floor(score * stealPct);
+        score = Math.max(0, score - stolen);
+        scoreDisplay.textContent = fmtScore(score);
+        updateShopButtons();
+        drainEnergy(8);
+        spawnFloatText(`-${fmtScore(stolen)} STOLEN!`, window.innerWidth/2, window.innerHeight/2 - 40, 'ufo-steal');
+        stealBanner.textContent = `👾 THE ALIEN STOLE ${fmtScore(stolen)} POINTS!`;
+        showBanner(stealBanner);
+      }
+    },
+    {
+      emoji: '❄️', color: '#00cfff', warn: '⚠️ STOP IT!', isFreeze: true,
+      onHit(x, y) {
+        sndFreeze();
+        const bonus = 800 * multiplier;
+        score += bonus;
+        scoreDisplay.textContent = fmtScore(score);
+        updateShopButtons();
+        addEnergy(5);
+        spawnFloatText(`BLOCKED! +${fmtScore(bonus)}`, x, y, 'freeze');
+        ufoBanner.textContent = `❄️ FREEZE BLOCKED! +${fmtScore(bonus)} pts!`;
+        showBanner(ufoBanner);
+      },
+      onMiss() {
+        sndFreeze();
+        const dur = 5000;
+        frozenUntil = Date.now() + dur;
+        freezeOverlay.classList.add('active');
+        scoreDisplay.classList.add('frozen');
+        freezeBarCont.style.display = 'block'; freezeLabel.style.display = 'block';
+        frenzyBarCont.style.display = 'none';  frenzyLabel.style.display = 'none';
+        statusDisplay.textContent = 'FROZEN! Cannot tap!';
+        statusDisplay.style.color = '#00cfff';
+        showBanner(freezeBanner);
+        drainEnergy(10);
+        clearInterval(freezeTimer);
+        freezeTimer = setInterval(() => {
+          const left = Math.max(0, frozenUntil - Date.now());
+          freezeBarEl.style.width = `${(left / dur) * 100}%`;
+          if (left <= 0) {
+            clearInterval(freezeTimer);
+            freezeOverlay.classList.remove('active');
+            scoreDisplay.classList.remove('frozen');
+            freezeBarCont.style.display = 'none'; freezeLabel.style.display = 'none';
+            statusDisplay.textContent = '';
+          }
+        }, 100);
+      }
+    }
+  ];
+
+  function spawnUFO() {
+    if (gameOver) return;
+    // Uranus: auto-destroy freeze UFOs before they appear
+    const pool = abil.blockFreeze ? UFO_TYPES.filter(t => !t.isFreeze) : UFO_TYPES;
+    const type = pool[Math.floor(Math.random() * pool.length)];
+    const el   = document.createElement('div');
+    el.className = 'ufo';
+    const beam = document.createElement('div'); beam.className = 'ufo-beam'; el.appendChild(beam);
+    const warn = document.createElement('div'); warn.className = 'ufo-warning'; warn.textContent = type.warn; el.appendChild(warn);
+    el.insertBefore(document.createTextNode(type.emoji), el.firstChild);
+    el.style.filter = `drop-shadow(0 0 14px ${type.color}99)`;
+    const fromLeft = Math.random() < 0.5;
+    const startX   = fromLeft ? -80 : window.innerWidth + 20;
+    const endX     = fromLeft ? window.innerWidth + 80 : -80;
+    const y        = Math.random() * window.innerHeight * 0.5 + 60;
+    const duration = (Math.random() * 3000 + 4000) * abil.objectSlow;
+    el.style.top = `${y}px`; el.style.left = `${startX}px`;
+    document.body.appendChild(el);
+    let clicked = false, t0 = null;
+    el.addEventListener('click', (ev) => {
+      if (clicked || gameOver) return;
+      clicked = true; initAudio();
+      type.onHit(ev.clientX, ev.clientY);
+      el.remove(); ev.stopPropagation();
+    });
+    (function animate(ts) {
+      if (!t0) t0 = ts;
+      const p = (ts - t0) / duration;
+      if (p >= 1) { if (!clicked && type.onMiss) type.onMiss(); el.remove(); return; }
+      if (clicked) { el.remove(); return; }
+      el.style.left = `${startX + (endX - startX) * p}px`;
+      el.style.top  = `${y + Math.sin(p * Math.PI * 6) * 18}px`;
+      if (duration * (1 - p) < 2000) el.style.opacity = Math.sin(Date.now() / 120) > 0 ? '1' : '0.5';
+      requestAnimationFrame(animate);
+    })(performance.now());
+    setTimeout(spawnUFO, Math.random() * 25000 + 20000);
+  }
+  setTimeout(spawnUFO, Math.random() * 25000 + 20000);
+
+  </script>
+</body>
+</html>
