@@ -195,20 +195,20 @@
     /* ── MOBILE TOGGLE BUTTONS ── */
     .panel-toggle {
       display: none;
-      position: fixed; bottom: 12px; z-index: 450;
-      height: 38px; padding: 0 14px;
-      border-radius: 20px; border: 1px solid rgba(255,255,255,0.18);
+      position: fixed; top: 10px; z-index: 450;
+      height: 34px; padding: 0 12px;
+      border-radius: 18px; border: 1px solid rgba(255,255,255,0.18);
       background: rgba(8,8,28,0.92);
       backdrop-filter: blur(8px);
-      color: #ffd700; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px;
-      cursor: pointer; align-items: center; justify-content: center; gap: 5px;
+      color: #ffd700; font-size: 0.7rem; font-weight: bold; letter-spacing: 1px;
+      cursor: pointer; align-items: center; justify-content: center; gap: 4px;
       box-shadow: 0 0 14px rgba(0,0,0,0.5);
       transition: background 0.15s;
     }
     .panel-toggle:hover { background: rgba(255,215,0,0.12); }
-    .panel-toggle .t-icon { font-size: 1rem; }
-    #toggle-shop { right: 12px; }
-    #toggle-ability { left: 12px; color: #7df7ff; border-color: rgba(125,247,255,0.2); }
+    .panel-toggle .t-icon { font-size: 0.9rem; }
+    #toggle-shop { right: 10px; }
+    #toggle-ability { left: 10px; color: #7df7ff; border-color: rgba(125,247,255,0.2); }
 
     /* Dimmed backdrop when a panel is open */
     .panel-backdrop {
@@ -300,13 +300,20 @@
       .panel-toggle { display: flex; }
       .sheet-close  { display: block; }
 
-      /* Both panels become bottom sheets */
+      /* Move mute button to top-center so toggles don't overlap it */
+      #mute-btn {
+        bottom: auto; top: 10px; right: auto;
+        left: 50%; transform: translateX(-50%);
+        font-size: 0.7rem; padding: 5px 10px;
+      }
+
+      /* Both panels become compact bottom sheets */
       #planet-shop, #ability-panel {
         position: fixed; left: 0; right: 0; bottom: 0;
         top: auto; width: 100%; max-width: 100%;
-        max-height: 52vh;
+        max-height: 38vh;
         border-radius: 18px 18px 0 0;
-        padding: 14px 14px 20px;
+        padding: 10px 12px 16px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         transform: translateY(110%);
@@ -318,46 +325,51 @@
         opacity: 1;
         pointer-events: all;
       }
-      /* Drag handle indicator */
+      /* Drag handle */
       #planet-shop::before, #ability-panel::before {
         content: '';
         display: block;
-        width: 36px; height: 4px;
+        width: 32px; height: 4px;
         background: rgba(255,255,255,0.2);
         border-radius: 3px;
-        margin: 0 auto 10px;
+        margin: 0 auto 8px;
       }
 
-      /* Planet shop mobile: 2-column grid for compact layout */
+      /* Planet shop: 2-column compact grid */
+      .shop-title { font-size: 0.7rem; margin-bottom: 6px; padding-bottom: 5px; }
       #shop-items {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 6px;
+        gap: 5px;
       }
-      .planet-btn { padding: 6px 7px; margin-bottom: 0; gap: 5px; }
-      .planet-btn .p-emoji { font-size: 1rem; }
-      .planet-btn .p-name  { font-size: 0.72rem; }
-      .planet-btn .p-cost  { font-size: 0.66rem; }
-      .planet-btn .p-drain { font-size: 0.6rem; }
+      .planet-btn { padding: 5px 6px; margin-bottom: 0; gap: 4px; }
+      .planet-btn .p-emoji { font-size: 0.9rem; }
+      .planet-btn .p-name  { font-size: 0.68rem; }
+      .planet-btn .p-cost  { font-size: 0.62rem; }
+      .planet-btn .p-drain { font-size: 0.56rem; }
 
-      /* Ability panel mobile */
-      #ability-panel { max-height: 35vh; }
+      /* Ability panel: even shorter */
+      #ability-panel { max-height: 28vh; }
+      .ap-title { font-size: 0.7rem; margin-bottom: 5px; padding-bottom: 4px; }
 
       /* Scale down game elements */
-      h1 { font-size: 1.4rem; margin-bottom: 6px; }
-      #score-display { font-size: 2.2rem; }
-      #star-container { width: 130px; height: 130px; }
-      #star { width: 105px; height: 105px; }
-      #energy-bar-track { width: 200px; }
+      h1 { font-size: 1.3rem; margin-bottom: 4px; margin-top: 36px; }
+      #score-display { font-size: 2rem; }
+      #star-container { width: 120px; height: 120px; }
+      #star { width: 100px; height: 100px; }
+      #energy-bar-track { width: 180px; }
+      #multiplier-display { font-size: 0.85rem; }
+      #status-display { font-size: 0.75rem; margin-bottom: 8px; }
     }
 
     @media (max-width: 400px) {
-      h1 { font-size: 1.15rem; }
-      #score-display { font-size: 1.7rem; }
-      #star-container { width: 110px; height: 110px; }
-      #star { width: 90px; height: 90px; }
-      #energy-bar-track { width: 160px; }
-      #planet-shop, #ability-panel { max-height: 55vh; padding: 12px 10px 16px; }
+      h1 { font-size: 1.1rem; }
+      #score-display { font-size: 1.6rem; }
+      #star-container { width: 100px; height: 100px; }
+      #star { width: 85px; height: 85px; }
+      #energy-bar-track { width: 150px; }
+      #planet-shop { max-height: 42vh; }
+      #ability-panel { max-height: 32vh; }
     }
 
     /* ── FLOATING TEXT ── */
